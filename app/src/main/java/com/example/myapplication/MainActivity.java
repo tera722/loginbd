@@ -5,32 +5,33 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import okhttp3.*;
-
-import org.json.JSONException;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import org.json.JSONObject;
-
-import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
     private EditText etUsuario, etContraseña;
     private Button btnLogin;
     private TextView tvResultado;
-    private final String URL_API = "http:/localhost/login.php"; // Cambia por la URL de tu servidor
+    private RequestQueue requestQueue;
+    private final String URL_API = "http://10.0.2.2/login.php";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // 1. Enlazar vistas
         etUsuario = findViewById(R.id.etUsuario);
         etContraseña = findViewById(R.id.etContraseña);
         btnLogin = findViewById(R.id.btnLogin);
         tvResultado = findViewById(R.id.tvResultado);
+        requestQueue = Volley.newRequestQueue(this);
 
-        // 2. Configurar el botón de login
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -47,61 +48,42 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void realizarLogin(String usuario, String contraseña) {
-        // 1. Crear cliente OkHttp
-        OkHttpClient client = new OkHttpClient();
-
-        // 2. Crear cuerpo JSON
-        JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("usuario", usuario);
-            jsonObject.put("contraseña", contraseña);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("usuario", usuario);
+            jsonBody.put("contraseña", contraseña);
 
-        // 3. Crear RequestBody
-        RequestBody body = RequestBody.create(
-                jsonObject.toString(),
-                MediaType.parse("application/json; charset=utf-8")
-        );
-
-        // 4. Crear Request
-        Request request = new Request.Builder()
-                .url(URL_API)
-                .post(body)
-                .build();
-
-        // 5. Realizar la solicitud
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                runOnUiThread(() -> tvResultado.setText("Error: " + e.getMessage()));
-            }
-
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                if (response.isSuccessful()) {
-                    String responseString = response.body().string();
-
-                    try {
-                        JSONObject responseJson = new JSONObject(responseString);
-                        boolean success = responseJson.getBoolean("success");
-                        String message = responseJson.getString("message");
-
-                        runOnUiThread(() -> {
-                            if (success) {
-                                tvResultado.setText("Login exitoso: " + message);
-                            } else {
-                                tvResultado.setText("Error: " + message);
+            JsonObjectRequest request = new JsonObjectRequest(
+                    Request.Method.POST,
+                    URL_API,
+                    jsonBody,
+                    new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                boolean success = response.getBoolean("success");
+                                String message = response.getString("message");
+                                if (success) {
+                                    tvResultado.setText("Login exitoso: " + message);
+                                } else {
+                                    tvResultado.setText("Error: " + message);
+                                }
+                            } catch (Exception e) {
+                                tvResultado.setText("Error al procesar la respuesta: " + e.getMessage());
                             }
-                        });
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            tvResultado.setText("Error de conexión: " + error.getMessage());
+                        }
                     }
-                } else {
-                    runOnUiThread(() -> tvResultado.setText("Error: " + response.message()));
-                }
-            }
-        });
+            );
+
+            requestQueue.add(request);
+        } catch (Exception e) {
+            tvResultado.setText("Error al crear la solicitud: " + e.getMessage());
+        }
     }
 }
