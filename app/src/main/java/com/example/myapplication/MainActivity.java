@@ -2,6 +2,8 @@ package com.example.myapplication;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
@@ -12,7 +14,13 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -34,7 +42,21 @@ public class MainActivity extends AppCompatActivity {
         etContraseña = findViewById(R.id.etContraseña);
         btnLogin = findViewById(R.id.btnLogin);
         tvResultado = findViewById(R.id.tvResultado);
+
         requestQueue = Volley.newRequestQueue(this);
+
+        spinnerUsuarios.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                // Obtener el usuario seleccionado
+                Usuario usuarioSeleccionado = (Usuario) parent.getItemAtPosition(position);
+                etUsuario.setText(usuarioSeleccionado.getUser());
+                etContraseña.setText(usuarioSeleccionado.getContrasena());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
 
         btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -49,6 +71,72 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private void cargarUsuarios() {
+        JsonObjectRequest request = new JsonObjectRequest(
+                Request.Method.GET,
+                URL_API,
+                null,
+                response -> {
+                    try {
+                        JSONArray usuariosJson = response.getJSONArray("usuarios");
+                        List<Usuario> usuarios = new ArrayList<>();
+
+                        for (int i = 0; i < usuariosJson.length(); i++) {
+                            JSONObject usuarioJson = usuariosJson.getJSONObject(i);
+                            Usuario usuario = new Usuario(
+                                    usuarioJson.getInt("id"),
+                                    usuarioJson.getString("user"),
+                                    usuarioJson.getString("contrasena")
+                            );
+                            usuarios.add(usuario);
+                        }
+
+                        // Configurar adaptador para el Spinner
+                        ArrayAdapter<Usuario> adapter = new ArrayAdapter<>(
+                                this,
+                                android.R.layout.simple_spinner_item,
+                                usuarios
+                        );
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                        spinnerUsuarios.setAdapter(adapter);
+
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                },
+                error -> {
+                    // Manejar error
+                }
+        );
+        requestQueue.add(request);
+    }
+
+    // Clase Usuario para manejar los datos
+    public class Usuario {
+        private int id;
+        private String user;
+        private String contrasena;
+
+        public Usuario(int id, String user, String contrasena) {
+            this.id = id;
+            this.user = user;
+            this.contrasena = contrasena;
+        }
+
+        public String getUser() {
+            return user;
+        }
+
+        public String getContrasena() {
+            return contrasena;
+        }
+
+        @Override
+        public String toString() {
+            return user; // Texto que se mostrará en el Spinner
+        }
     }
 
     private void realizarLogin(String usuario, String contraseña) {
