@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.TextView;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -15,6 +16,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
 
+    private Spinner spinnerUsuarios;
     private EditText etUsuario, etContraseña;
     private Button btnLogin;
     private TextView tvResultado;
@@ -25,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        spinnerUsuarios = findViewById(R.id.spinnerUsuarios);
 
         etUsuario = findViewById(R.id.etUsuario);
         etContraseña = findViewById(R.id.etContraseña);
@@ -65,6 +69,16 @@ public class MainActivity extends AppCompatActivity {
                                 String message = response.getString("message");
                                 if (success) {
                                     tvResultado.setText("Login exitoso: " + message);
+
+                                    // Obtener el usuario de la respuesta
+                                    String usuarioBD = response.getString("usuario");
+
+                                    // Encontrar el EditText EdBD
+                                    EditText edBD = findViewById(R.id.EdBD);
+
+                                    // Establecer el texto del usuario
+                                    edBD.setText(usuarioBD);
+
                                 } else {
                                     tvResultado.setText("Error: " + message);
                                 }

@@ -33,5 +33,28 @@
         android:text=""
         android:paddingTop="16dp"
         android:textSize="16sp" />
+
+    <Spinner
+        android:id="@+id/spinnerUsuarios"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/EdBD"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="visualizar user"
+        android:inputType="text"
+        android:minHeight="48dp" />
+
+    <EditText
+        android:id="@+id/EdPass"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="visualizar contrasena"
+        android:inputType="text"
+        android:minHeight="48dp" />
+
 </LinearLayout>
 
